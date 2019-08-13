@@ -1,7 +1,5 @@
-import 'dart:math';
 
 import 'package:flutter_weather/models/weather.dart';
-import 'package:meta/meta.dart';
 import 'package:bloc/bloc.dart';
 import 'package:flutter/material.dart';
 import './theme_state.dart';

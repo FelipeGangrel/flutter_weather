@@ -8,7 +8,6 @@ import '../repositories/repositories.dart';
 import '../widgets/widgets.dart';
 import '../models/models.dart' as model;
 import './city_selection.dart';
-import 'package:flutter_weather/models/weather.dart';
 
 class Weather extends StatefulWidget {
   final WeatherRepository weatherRepository;
@@ -43,7 +42,7 @@ class _WeatherState extends State<Weather> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.blue,
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text('Flutter Clima'),
         actions: <Widget>[
@@ -56,12 +55,15 @@ class _WeatherState extends State<Weather> {
       body: Center(
         child: BlocBuilder(
           bloc: _weatherBloc,
-          builder: (_, WeatherState weatherState) {
+          builder: (context, weatherState) {
+            Widget content;
+
             if (weatherState is WeatherEmpty) {
-              return Center(child: Text('Por favor, selecione uma cidade'));
+              content = Center(child: Text('Por favor, selecione uma cidade'));
             }
+
             if (weatherState is WeatherLoading) {
-              return Center(
+              content = Center(
                 child: CircularProgressIndicator(
                   backgroundColor: Colors.white,
                 ),
@@ -76,7 +78,7 @@ class _WeatherState extends State<Weather> {
               _refreshCompleter?.complete();
               _refreshCompleter = Completer<void>();
 
-              return BlocBuilder<ThemeBloc, ThemeState>(
+              content = BlocBuilder<ThemeBloc, ThemeState>(
                 builder: (context, themeState) {
                   return GradientContainer(
                     color: themeState.color,
@@ -94,9 +96,11 @@ class _WeatherState extends State<Weather> {
             }
 
             if (weatherState is WeatherError) {
-              return Text('Algo deu errado',
+              content = Text('Algo deu errado',
                   style: TextStyle(color: Colors.red));
             }
+
+            return content;
           },
         ),
       ),
