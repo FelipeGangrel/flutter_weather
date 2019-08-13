@@ -74,11 +74,10 @@ class _WeatherState extends State<Weather> {
               themeBloc.dispatch(WeatherChanged(condition: weather.condition));
 
               _refreshCompleter?.complete();
-              _refreshCompleter = Completer();
+              _refreshCompleter = Completer<void>();
 
-              return BlocBuilder(
-                bloc: themeBloc,
-                builder: (_, ThemeState themeState) {
+              return BlocBuilder<ThemeBloc, ThemeState>(
+                builder: (context, themeState) {
                   return GradientContainer(
                     color: themeState.color,
                     child: RefreshIndicator(
@@ -93,6 +92,7 @@ class _WeatherState extends State<Weather> {
                 },
               );
             }
+
             if (weatherState is WeatherError) {
               return Text('Algo deu errado',
                   style: TextStyle(color: Colors.red));
