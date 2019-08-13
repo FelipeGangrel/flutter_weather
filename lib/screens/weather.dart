@@ -6,7 +6,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../blocs/blocs.dart';
 import '../repositories/repositories.dart';
 import '../widgets/widgets.dart';
+import '../models/models.dart' as model;
 import './city_selection.dart';
+import 'package:flutter_weather/models/weather.dart';
 
 class Weather extends StatefulWidget {
   final WeatherRepository weatherRepository;
@@ -30,6 +32,14 @@ class _WeatherState extends State<Weather> {
     _weatherBloc = WeatherBloc(weatherRepository: widget.weatherRepository);
   }
 
+  _handleSearchButton() async {
+    final city = await Navigator.push(
+        context, MaterialPageRoute(builder: (context) => CitySelection()));
+    if (city != null) {
+      _weatherBloc.dispatch(FetchWeather(city: city));
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -39,28 +49,27 @@ class _WeatherState extends State<Weather> {
         actions: <Widget>[
           IconButton(
             icon: Icon(Icons.search),
-            onPressed: () async {
-              final city = await Navigator.push(context,
-                  MaterialPageRoute(builder: (context) => CitySelection()));
-              if (city != null) {
-                _weatherBloc.dispatch(FetchWeather(city: city));
-              }
-            },
+            onPressed: _handleSearchButton,
           )
         ],
       ),
       body: Center(
         child: BlocBuilder(
           bloc: _weatherBloc,
-          builder: (_, WeatherState state) {
-            if (state is WeatherEmpty) {
+          builder: (_, WeatherState weatherState) {
+            if (weatherState is WeatherEmpty) {
               return Center(child: Text('Por favor, selecione uma cidade'));
             }
-            if (state is WeatherLoading) {
-              return Center(child: CircularProgressIndicator());
+            if (weatherState is WeatherLoading) {
+              return Center(
+                child: CircularProgressIndicator(
+                  backgroundColor: Colors.white,
+                ),
+              );
             }
-            if (state is WeatherLoaded) {
-              final weather = state.weather;
+
+            if (weatherState is WeatherLoaded) {
+              final weather = weatherState.weather;
               final themeBloc = BlocProvider.of<ThemeBloc>(context);
               themeBloc.dispatch(WeatherChanged(condition: weather.condition));
 
@@ -78,38 +87,41 @@ class _WeatherState extends State<Weather> {
                             .dispatch(RefreshWeather(city: weather.location));
                         return _refreshCompleter.future;
                       },
-                      child: ListView(
-                        children: <Widget>[
-                          Padding(
-                            padding: EdgeInsets.only(top: 100.0),
-                            child: Center(
-                              child: Location(location: weather.location),
-                            ),
-                          ),
-                          Center(
-                            child: LastUpdated(dateTime: weather.lastUpdated),
-                          ),
-                          Padding(
-                            padding: EdgeInsets.symmetric(vertical: 50.0),
-                            child: Center(
-                              child:
-                                  CombinedWeatherTemperature(weather: weather),
-                            ),
-                          )
-                        ],
-                      ),
+                      child: _buildListView(weather),
                     ),
                   );
                 },
               );
             }
-            if (state is WeatherError) {
+            if (weatherState is WeatherError) {
               return Text('Algo deu errado',
                   style: TextStyle(color: Colors.red));
             }
           },
         ),
       ),
+    );
+  }
+
+  ListView _buildListView(model.Weather weather) {
+    return ListView(
+      children: <Widget>[
+        Padding(
+          padding: EdgeInsets.only(top: 100.0),
+          child: Center(
+            child: Location(location: weather.location),
+          ),
+        ),
+        Center(
+          child: LastUpdated(dateTime: weather.lastUpdated),
+        ),
+        Padding(
+          padding: EdgeInsets.symmetric(vertical: 50.0),
+          child: Center(
+            child: CombinedWeatherTemperature(weather: weather),
+          ),
+        )
+      ],
     );
   }
 
